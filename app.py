@@ -10,11 +10,13 @@ from tkinter import filedialog
 
 from adb_manager import ADBManager
 from package_installer import PackageInstaller
+from device_optimizer import DeviceOptimizer
 
 class DLuzApi:
-    def __init__(self, adb_mgr: ADBManager, installer: PackageInstaller):
+    def __init__(self, adb_mgr: ADBManager, installer: PackageInstaller, optimizer: DeviceOptimizer):
         self.adb = adb_mgr
         self.installer = installer
+        self.optimizer = optimizer
         self._window = None
 
     def set_window(self, window):
@@ -39,7 +41,6 @@ class DLuzApi:
             if os.path.exists(c):
                 return c
 
-        # Checar na pasta Desktop ou diretório atual
         search_dirs = [
             r"C:\Users\dluzgg\Desktop\free fire v7a\FF V7A",
             os.path.join(os.path.expanduser("~"), "Desktop"),
@@ -73,11 +74,19 @@ class DLuzApi:
                 "name": os.path.basename(ff_path),
                 "size": ff_size,
                 "version": "1.132.1"
+            },
+            "device_profile": {
+                "manufacturer": "INFINIX",
+                "brand": "INFINIX",
+                "model": "Infinix X6891"
             }
         }
 
     def refresh_devices(self):
         return self.adb.list_devices()
+
+    def apply_device_profile(self, serial: str = None):
+        return self.optimizer.apply_profile(serial)
 
     def browse_file(self):
         root = tk.Tk()
@@ -166,7 +175,8 @@ def main():
 
     adb_mgr = ADBManager()
     installer = PackageInstaller(adb_mgr)
-    api = DLuzApi(adb_mgr, installer)
+    optimizer = DeviceOptimizer(adb_mgr)
+    api = DLuzApi(adb_mgr, installer, optimizer)
 
     port = find_free_port()
     start_server(ui_dir, port)
@@ -177,8 +187,8 @@ def main():
         url=app_url,
         js_api=api,
         width=920,
-        height=720,
-        min_size=(800, 600),
+        height=740,
+        min_size=(840, 640),
         resizable=True,
         background_color='#090d16'
     )

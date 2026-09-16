@@ -1,4 +1,4 @@
-﻿// Audio Context for subtle SFX feedback
+// Audio Context for subtle SFX feedback
 let audioCtx = null;
 function playSound(type = "click") {
   try {
@@ -228,6 +228,61 @@ btnRefreshDevices.addEventListener("click", async () => {
     refreshIcon.classList.remove("spinning");
   }
 });
+
+// Copy to clipboard helper
+window.copyToClipboard = function(text, btn) {
+  playSound("click");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      updateBtnState(btn);
+    }).catch(() => fallbackCopy(text, btn));
+  } else {
+    fallbackCopy(text, btn);
+  }
+};
+
+function fallbackCopy(text, btn) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+  updateBtnState(btn);
+}
+
+function updateBtnState(btn) {
+  const originalText = btn.textContent;
+  btn.textContent = "Copiado!";
+  btn.classList.add("text-emerald-400", "border-emerald-400/40");
+  setTimeout(() => {
+    btn.textContent = originalText;
+    btn.classList.remove("text-emerald-400", "border-emerald-400/40");
+  }, 1500);
+}
+
+// Device profile application handler
+const btnApplyProfile = document.getElementById("btn-apply-profile");
+if (btnApplyProfile) {
+  btnApplyProfile.addEventListener("click", async () => {
+    playSound("click");
+    const serial = deviceSelect.value || null;
+    appendLog("Aplicando perfil Infinix X6891 para destravar 120 e 144 FPS...", "info");
+    try {
+      const res = await window.pywebview.api.apply_device_profile(serial);
+      if (res && res.success) {
+        playSound("success");
+        appendLog(`Perfil Infinix X6891 aplicado! (Configurações: ${res.conf_updated}, ADB: ${res.adb_updated ? 'OK' : 'Pendente'})`, "success");
+        appendLog("⚠️ AVISO OBRIGATÓRIO: Reinicie seu emulador antes de instalar o Free Fire!", "warning");
+        alert("✅ Perfil Infinix X6891 aplicado com sucesso!\n\n⚠️ ATENÇÃO OBRIGATÓRIA: REINICIE O SEU EMULADOR antes de instalar o Free Fire para que a taxa de 120 e 144 FPS seja reconhecida!");
+      } else {
+        appendLog("Falha ao aplicar perfil: " + (res ? res.message : "Erro desconhecido"), "error");
+      }
+    } catch (e) {
+      appendLog("Erro ao aplicar perfil: " + e, "error");
+    }
+  });
+}
 
 btnInstallFF.addEventListener("click", () => {
   if (isInstalling) return;
