@@ -1,4 +1,4 @@
-﻿// Audio Context for subtle SFX feedback
+// Audio Context for subtle SFX feedback
 let audioCtx = null;
 function playSound(type = "click") {
   try {
@@ -45,6 +45,20 @@ function playSound(type = "click") {
     // Audio context not available or blocked
   }
 }
+
+// Global helper to open links in system browser
+window.openExternal = function(url) {
+  playSound("click");
+  try {
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.open_url) {
+      window.pywebview.api.open_url(url);
+    } else {
+      window.open(url, "_blank");
+    }
+  } catch (e) {
+    window.open(url, "_blank");
+  }
+};
 
 // Elements
 const deviceSelect = document.getElementById("device-select");

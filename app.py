@@ -3,6 +3,7 @@ import sys
 import json
 import threading
 import socket
+import webbrowser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import webview
 import tkinter as tk
@@ -97,6 +98,15 @@ class DLuzApi:
             "devices": devices,
             "adb_path": self.adb.adb_path,
             "packages": packages,
+            "creator": {
+                "name": "DLuz",
+                "channel": "DLuz Games",
+                "youtube": "https://www.youtube.com/@dluzgames",
+                "member": "https://www.youtube.com/@dluzgames/join",
+                "instagram": "https://www.instagram.com/dluzgames/",
+                "store": "https://loja.dluz.com.br",
+                "news": "https://dluz.com.br"
+            },
             "device_profile": {
                 "manufacturer": "INFINIX",
                 "brand": "INFINIX",
@@ -112,6 +122,13 @@ class DLuzApi:
 
     def apply_device_profile(self, serial: str = None):
         return self.optimizer.apply_profile(serial)
+
+    def open_url(self, url: str):
+        try:
+            webbrowser.open(url)
+            return True
+        except Exception:
+            return False
 
     def browse_file(self):
         root = tk.Tk()
@@ -208,12 +225,12 @@ def main():
     app_url = f"http://127.0.0.1:{port}/index.html"
 
     window = webview.create_window(
-        title="DLuz ZArchiver — Instalador Universal ADB",
+        title="DLuz ZArchiver — por DLuz Games",
         url=app_url,
         js_api=api,
-        width=940,
-        height=760,
-        min_size=(840, 640),
+        width=960,
+        height=780,
+        min_size=(860, 660),
         resizable=True,
         background_color='#090d16'
     )
