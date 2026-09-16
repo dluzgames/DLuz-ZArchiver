@@ -32,55 +32,80 @@ class DLuzApi:
         else:
             return f"{bytes_size / (1024 * 1024 * 1024):.2f} GB"
 
-    def find_ff_apks(self) -> str:
-        candidates = [
-            r"C:\Users\dluzgg\Desktop\free fire v7a\FF V7A\Free Fire V7A versao 1.132.1.apks",
-            r"C:\Users\dluzgg\Desktop\free fire v7a\FF V7A\Free Fire V7A att via zarchiver.apks",
-        ]
-        for c in candidates:
-            if os.path.exists(c):
-                return c
-
+    def scan_packages(self):
         search_dirs = [
+            os.path.join(os.path.expanduser('~'), 'Desktop'),
+            os.path.join(os.path.expanduser('~'), 'Downloads'),
             r"C:\Users\dluzgg\Desktop\free fire v7a\FF V7A",
-            os.path.join(os.path.expanduser("~"), "Desktop"),
-            os.path.dirname(os.path.abspath(__file__))
+            r"C:\Users\dluzgg\Desktop\free fire att",
+            os.path.dirname(os.path.abspath(__file__)),
         ]
-        for d in search_dirs:
-            if os.path.exists(d):
-                for f in os.listdir(d):
-                    if f.endswith(".apks") and ("free fire" in f.lower() or "1.132" in f):
-                        return os.path.join(d, f)
+        seen_paths = set()
+        packages = []
 
-        return candidates[0]
+        for sdir in search_dirs:
+            if not os.path.exists(sdir):
+                continue
+            for root, dirs, files in os.walk(sdir):
+                depth = root[len(sdir):].count(os.sep)
+                if depth > 2:
+                    continue
+                for f in files:
+                    ext = os.path.splitext(f)[1].lower()
+                    if ext in ('.apks', '.xapk', '.apk'):
+                        fpath = os.path.join(root, f)
+                        if fpath in seen_paths:
+                            continue
+                        seen_paths.add(fpath)
+                        try:
+                            sz = os.path.getsize(fpath)
+                            if ext == '.apk' and sz < 5 * 1024 * 1024 and 'free' not in f.lower():
+                                continue
+                            sz_str = self._format_size(sz)
+                            clean_name = f.replace('+', ' ')
+                            is_ff = 'free' in f.lower() or 'ff' in f.lower()
+                            is_v7a = 'v7a' in f.lower()
+                            tag = ext.replace('.', '').upper()
+                            if is_v7a:
+                                tag += ' • ARMv7a'
+                            elif is_ff:
+                                tag += ' • Free Fire'
+
+                            packages.append({
+                                'path': fpath,
+                                'name': clean_name,
+                                'size': sz_str,
+                                'ext': ext.replace('.', '').upper(),
+                                'is_ff': is_ff,
+                                'is_v7a': is_v7a,
+                                'tag': tag
+                            })
+                        except Exception:
+                            pass
+
+        packages.sort(key=lambda p: (
+            0 if (p['is_ff'] and p['is_v7a']) else (1 if p['is_ff'] else 2),
+            p['name']
+        ))
+        return packages
 
     def get_initial_data(self):
         devices = self.adb.list_devices()
-        ff_path = self.find_ff_apks()
-        ff_exists = os.path.exists(ff_path)
-        ff_size = ""
-        if ff_exists:
-            try:
-                ff_size = self._format_size(os.path.getsize(ff_path))
-            except Exception:
-                ff_size = "N/A"
+        packages = self.scan_packages()
 
         return {
             "devices": devices,
             "adb_path": self.adb.adb_path,
-            "preset_ff": {
-                "exists": ff_exists,
-                "path": ff_path,
-                "name": os.path.basename(ff_path),
-                "size": ff_size,
-                "version": "1.132.1"
-            },
+            "packages": packages,
             "device_profile": {
                 "manufacturer": "INFINIX",
                 "brand": "INFINIX",
                 "model": "Infinix X6891"
             }
         }
+
+    def rescan_packages(self):
+        return self.scan_packages()
 
     def refresh_devices(self):
         return self.adb.list_devices()
@@ -186,8 +211,8 @@ def main():
         title="DLuz ZArchiver — Instalador Universal ADB",
         url=app_url,
         js_api=api,
-        width=920,
-        height=740,
+        width=940,
+        height=760,
         min_size=(840, 640),
         resizable=True,
         background_color='#090d16'

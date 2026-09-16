@@ -90,45 +90,66 @@
   <!-- MAIN CONTAINER (SCROLLABLE CONTENT) -->
   <main class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
 
-    <!-- HERO CARD: FREE FIRE V7A DETECTADO -->
-    <div id="ff-card" class="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-[#102422]/90 via-[#0f172a]/95 to-[#0b101c] p-4 shadow-xl shadow-emerald-950/20 transition-all hover:border-emerald-500/50">
+    <!-- HERO CARD: PACOTE APKS / JOGO SELECIONADO -->
+    <div id="pkg-card" class="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-[#102422]/90 via-[#0f172a]/95 to-[#0b101c] p-4 shadow-xl shadow-emerald-950/20 transition-all hover:border-emerald-500/50">
       <div class="absolute -top-12 -right-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
+      <!-- Top row with package dropdown selector -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 mb-3 border-b border-white/10 relative z-10">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            Jogos & APKS Encontrados no PC:
+          </span>
+          <span id="pkg-count-badge" class="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">0</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <select id="package-select" class="bg-[#131d31] border border-white/15 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 font-medium max-w-xs truncate cursor-pointer shadow-inner">
+            <option value="">Carregando pacotes...</option>
+          </select>
+          <button id="btn-rescan-packages" title="Re-escanear pastas do PC" class="p-1.5 rounded-lg bg-[#1a2336] hover:bg-[#222e47] border border-white/10 text-slate-300 hover:text-white transition-all shadow-sm active:scale-95">
+            <svg id="rescan-icon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Selected Package Info & Install Button -->
       <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
-        <!-- Left info -->
         <div class="flex items-center gap-3.5">
-          <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 shadow-md">
-            <span class="text-2xl">🔥</span>
+          <div id="pkg-icon-box" class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 shadow-md">
+            <span id="pkg-icon-symbol" class="text-2xl">🔥</span>
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h2 id="ff-title-label" class="text-sm md:text-base font-bold text-white">Free Fire V7A v1.132.1 — Pronto para Instalar</h2>
-              <span id="ff-version-badge" class="text-[10px] bg-amber-500/20 text-amber-300 font-semibold px-2 py-0.5 rounded-full border border-amber-500/30">v1.132.1 APKS</span>
+              <h2 id="selected-pkg-title" class="text-sm md:text-base font-bold text-white">Free Fire V7A v1.132.1</h2>
+              <span id="selected-pkg-tag" class="text-[10px] bg-amber-500/20 text-amber-300 font-semibold px-2 py-0.5 rounded-full border border-amber-500/30">APKS • ARMv7a</span>
             </div>
-            <p id="ff-path-label" class="text-xs text-slate-300 font-mono mt-0.5 truncate max-w-md">
-              C:\Users\dluzgg\Desktop\free fire v7a\FF V7A\Free Fire V7A att via zarchiver.apks
+            <p id="selected-pkg-path" class="text-xs text-slate-300 font-mono mt-0.5 truncate max-w-md">
+              C:\Users\dluzgg\Desktop\free fire v7a\FF V7A\Free Fire V7A versao 1.132.1.apks
             </p>
             <div class="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400">
-              <span class="flex items-center gap-1">
-                <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-                3 Splits (Base + Armeabi-v7a + Assets)
+              <span class="flex items-center gap-1 text-emerald-400 font-medium">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                Pronto para envio ADB
               </span>
               <span>•</span>
-              <span id="ff-size-label" class="text-slate-300 font-medium">~378 MB</span>
+              <span id="selected-pkg-size" class="text-slate-300 font-medium">378.3 MB</span>
             </div>
           </div>
         </div>
 
         <!-- Action Button -->
-        <button id="btn-install-ff" class="w-full md:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs md:text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all transform active:scale-98">
+        <button id="btn-install-current-pkg" class="w-full md:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs md:text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all transform active:scale-98">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          INSTALAR FREE FIRE V7A NO EMULADOR
+          INSTALAR NO EMULADOR
         </button>
       </div>
+    </div>
     <!-- CARD: DESTRAVAR 120 & 144 FPS (PERFIL INFINIX X6891) -->
     <div class="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-[#0e1e32]/90 via-[#101726]/95 to-[#0b0f19] p-4 shadow-xl shadow-cyan-950/20">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">

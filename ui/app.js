@@ -1,4 +1,4 @@
-// Audio Context for subtle SFX feedback
+﻿// Audio Context for subtle SFX feedback
 let audioCtx = null;
 function playSound(type = "click") {
   try {
@@ -20,7 +20,6 @@ function playSound(type = "click") {
       osc.start(now);
       osc.stop(now + 0.05);
     } else if (type === "success") {
-      // Pleasant victory chord
       [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
@@ -55,10 +54,18 @@ const devicePulse = document.getElementById("device-pulse");
 const deviceDot = document.getElementById("device-dot");
 const adbEngineLabel = document.getElementById("adb-engine-label");
 
-const ffCard = document.getElementById("ff-card");
-const ffPathLabel = document.getElementById("ff-path-label");
-const ffSizeLabel = document.getElementById("ff-size-label");
-const btnInstallFF = document.getElementById("btn-install-ff");
+// Dynamic Package Selector Elements
+const pkgCard = document.getElementById("pkg-card");
+const packageSelect = document.getElementById("package-select");
+const pkgCountBadge = document.getElementById("pkg-count-badge");
+const btnRescanPackages = document.getElementById("btn-rescan-packages");
+const rescanIcon = document.getElementById("rescan-icon");
+const selectedPkgTitle = document.getElementById("selected-pkg-title");
+const selectedPkgTag = document.getElementById("selected-pkg-tag");
+const selectedPkgPath = document.getElementById("selected-pkg-path");
+const selectedPkgSize = document.getElementById("selected-pkg-size");
+const pkgIconSymbol = document.getElementById("pkg-icon-symbol");
+const btnInstallCurrentPkg = document.getElementById("btn-install-current-pkg");
 
 const dropZone = document.getElementById("drop-zone");
 const btnBrowseFile = document.getElementById("btn-browse-file");
@@ -82,7 +89,8 @@ const terminalLogs = document.getElementById("terminal-logs");
 
 let currentSelectedFile = null;
 let isInstalling = false;
-let presetFFPath = "C:\\Users\\dluzgg\\Desktop\\free fire v7a\\FF V7A\\Free Fire V7A att via zarchiver.apks";
+let scannedPackages = [];
+let activePackage = null;
 
 // Logging helper
 function appendLog(text, type = "info") {
@@ -146,17 +154,18 @@ window.onInstallProgress = function(percent, message, stage) {
 
 function setBusy(busy) {
   isInstalling = busy;
-  btnInstallFF.disabled = busy;
-  btnInstallSelected.disabled = busy;
-  btnRefreshDevices.disabled = busy;
-  btnBrowseFile.disabled = busy;
+  if (btnInstallCurrentPkg) btnInstallCurrentPkg.disabled = busy;
+  if (btnInstallSelected) btnInstallSelected.disabled = busy;
+  if (btnRefreshDevices) btnRefreshDevices.disabled = busy;
+  if (btnBrowseFile) btnBrowseFile.disabled = busy;
+  if (btnRescanPackages) btnRescanPackages.disabled = busy;
 
   if (busy) {
-    btnInstallFF.classList.add("opacity-50", "cursor-not-allowed");
-    btnInstallSelected.classList.add("opacity-50", "cursor-not-allowed");
+    if (btnInstallCurrentPkg) btnInstallCurrentPkg.classList.add("opacity-50", "cursor-not-allowed");
+    if (btnInstallSelected) btnInstallSelected.classList.add("opacity-50", "cursor-not-allowed");
   } else {
-    btnInstallFF.classList.remove("opacity-50", "cursor-not-allowed");
-    btnInstallSelected.classList.remove("opacity-50", "cursor-not-allowed");
+    if (btnInstallCurrentPkg) btnInstallCurrentPkg.classList.remove("opacity-50", "cursor-not-allowed");
+    if (btnInstallSelected) btnInstallSelected.classList.remove("opacity-50", "cursor-not-allowed");
   }
 }
 
@@ -185,6 +194,45 @@ function populateDevices(devices) {
   });
 }
 
+// Package library population
+function populatePackages(packages) {
+  scannedPackages = packages || [];
+  pkgCountBadge.textContent = scannedPackages.length;
+  packageSelect.innerHTML = "";
+
+  if (scannedPackages.length === 0) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Nenhum pacote encontrado nas pastas";
+    packageSelect.appendChild(opt);
+    pkgCard.classList.add("hidden");
+    return;
+  }
+
+  pkgCard.classList.remove("hidden");
+
+  scannedPackages.forEach((p, idx) => {
+    const opt = document.createElement("option");
+    opt.value = idx;
+    opt.textContent = `${p.is_ff ? '🔥 ' : '📦 '}${p.name} (${p.size})`;
+    packageSelect.appendChild(opt);
+  });
+
+  // Seleciona o primeiro pacote por padrão
+  selectPackageByIndex(0);
+}
+
+function selectPackageByIndex(index) {
+  if (index >= 0 && index < scannedPackages.length) {
+    activePackage = scannedPackages[index];
+    selectedPkgTitle.textContent = activePackage.name;
+    selectedPkgTag.textContent = activePackage.tag;
+    selectedPkgPath.textContent = activePackage.path;
+    selectedPkgSize.textContent = activePackage.size;
+    pkgIconSymbol.textContent = activePackage.is_ff ? "🔥" : "📦";
+  }
+}
+
 // Initial Data Load
 async function initApp() {
   appendLog("Iniciando conexão com a API interna do DLuz ZArchiver...", "info");
@@ -195,16 +243,9 @@ async function initApp() {
       if (data.adb_path) {
         adbEngineLabel.textContent = `ADB: ${data.adb_path.split('\\').pop()}`;
       }
-      if (data.preset_ff && data.preset_ff.exists) {
-        presetFFPath = data.preset_ff.path;
-        ffPathLabel.textContent = data.preset_ff.path;
-        ffSizeLabel.textContent = data.preset_ff.size;
-        ffCard.classList.remove("hidden");
-        appendLog(`Free Fire V7A detectado: ${data.preset_ff.size}`, "info");
-      } else {
-        ffCard.classList.add("hidden");
-      }
-      appendLog("Pronto para uso! Selecione o arquivo ou clique em Instalar.", "success");
+      populatePackages(data.packages);
+      appendLog(`Escaneamento concluído: ${data.packages ? data.packages.length : 0} pacote(s) encontrado(s) no PC.`, "info");
+      appendLog("Pronto para uso! Escolha o pacote acima ou arraste qualquer arquivo.", "success");
     } catch (e) {
       appendLog("Erro ao carregar dados iniciais: " + e, "error");
     }
@@ -227,6 +268,36 @@ btnRefreshDevices.addEventListener("click", async () => {
   } finally {
     refreshIcon.classList.remove("spinning");
   }
+});
+
+btnRescanPackages.addEventListener("click", async () => {
+  playSound("click");
+  rescanIcon.classList.add("spinning");
+  appendLog("Re-escaneando pastas do PC em busca de pacotes APKS...", "info");
+  try {
+    const packages = await window.pywebview.api.rescan_packages();
+    populatePackages(packages);
+    appendLog(`Re-escaneamento concluído: ${packages.length} pacote(s) disponível(is).`, "info");
+  } catch (e) {
+    appendLog("Erro ao re-escanear pacotes: " + e, "error");
+  } finally {
+    rescanIcon.classList.remove("spinning");
+  }
+});
+
+packageSelect.addEventListener("change", (e) => {
+  playSound("click");
+  const idx = parseInt(e.target.value, 10);
+  selectPackageByIndex(idx);
+  if (activePackage) {
+    appendLog(`Pacote ativo selecionado: ${activePackage.name}`, "info");
+  }
+});
+
+btnInstallCurrentPkg.addEventListener("click", () => {
+  if (isInstalling || !activePackage) return;
+  playSound("click");
+  startInstallation(activePackage.path);
 });
 
 // Copy to clipboard helper
@@ -283,12 +354,6 @@ if (btnApplyProfile) {
     }
   });
 }
-
-btnInstallFF.addEventListener("click", () => {
-  if (isInstalling) return;
-  playSound("click");
-  startInstallation(presetFFPath);
-});
 
 btnBrowseFile.addEventListener("click", async (e) => {
   e.stopPropagation();
@@ -377,7 +442,6 @@ dropZone.addEventListener('dragleave', () => {
 
 dropZone.addEventListener('drop', (e) => {
   dropZone.classList.remove('border-cyan-400', 'bg-[#1a2942]/90');
-  // Em navegadores / pywebview arquivos locais podem ser disparados pelo browse_file
   btnBrowseFile.click();
 });
 
@@ -386,7 +450,6 @@ window.addEventListener("pywebviewready", () => {
   initApp();
 });
 
-// Fallback if pywebviewready already fired
 setTimeout(() => {
   if (window.pywebview && window.pywebview.api) {
     initApp();
